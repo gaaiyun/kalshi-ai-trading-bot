@@ -188,7 +188,7 @@ git add .
 git commit -m "Initial commit: Kalshi AI Trading Bot OpenClaw Skill"
 
 # 添加远程仓库
-git remote add origin https://github.com/yourusername/kalshi-trading-skill.git
+git remote add origin https://github.com/gaaiyun/kalshi-trading-skill.git
 
 # 推送
 git push -u origin main

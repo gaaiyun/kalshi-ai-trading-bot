@@ -292,7 +292,7 @@ git commit -m "Initial commit: Kalshi AI Trading Bot OpenClaw Skill
 - Complete documentation and examples"
 
 # 添加远程仓库
-git remote add origin https://github.com/yourusername/kalshi-trading-skill.git
+git remote add origin https://github.com/gaaiyun/kalshi-trading-skill.git
 
 # 推送
 git push -u origin main
@@ -327,7 +327,7 @@ git push -u origin main
 
 ## 🙏 致谢
 
-基于原始 [Kalshi AI Trading Bot](https://github.com/yourusername/kalshi-ai-trading-bot) 项目（159⭐），改编为 OpenClaw Skill 框架。
+基于原始 [Kalshi AI Trading Bot](https://github.com/gaaiyun/kalshi-ai-trading-bot) 项目（159⭐），改编为 OpenClaw Skill 框架。
 
 ---
 

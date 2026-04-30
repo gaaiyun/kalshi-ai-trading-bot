@@ -255,7 +255,7 @@ mypy src/
 - **Kalshi API Docs**: [kalshi.com/docs](https://kalshi.com/docs)
 - **xAI Console**: [console.x.ai](https://console.x.ai/)
 - **OpenRouter**: [openrouter.ai](https://openrouter.ai/)
-- **Original Project**: [github.com/kalshi-ai-trading-bot](https://github.com/yourusername/kalshi-ai-trading-bot)
+- **Original Project**: [github.com/kalshi-ai-trading-bot](https://github.com/gaaiyun/kalshi-ai-trading-bot)
 
 ## 📄 License
 
@@ -263,7 +263,7 @@ MIT License - See LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-Based on the original [Kalshi AI Trading Bot](https://github.com/yourusername/kalshi-ai-trading-bot) project. Adapted for OpenClaw skill framework.
+Based on the original [Kalshi AI Trading Bot](https://github.com/gaaiyun/kalshi-ai-trading-bot) project. Adapted for OpenClaw skill framework.
 
 ---
 
