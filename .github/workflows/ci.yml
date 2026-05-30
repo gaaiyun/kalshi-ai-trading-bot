@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Allow a newer push to cancel an in-progress run on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+
+    # Tests use empty-string fallbacks for credentials; no real secrets needed.
+    # These are set explicitly so any os.getenv lookups resolve deterministically.
+    env:
+      KALSHI_API_KEY: ""
+      XAI_API_KEY: ""
+      OPENROUTER_API_KEY: ""
+      OPENAI_API_KEY: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      # The 46 unit tests only exercise three modules
+      # (src/agents/base_agent, src/utils/database, src/utils/edge_filter).
+      # Their full import chain needs just the lightweight deps below.
+      # Heavy / optional deps (xai-sdk, openai, anthropic, pandas, numpy,
+      # scipy, websockets, feedparser, streamlit, httpx, cryptography, ...)
+      # are NOT required to run the tests, so we skip them for a fast,
+      # reproducible CI install.
+      - name: Install test dependencies
+        run: |
+          python -m pip install \
+            pytest==7.4.3 \
+            pytest-asyncio==0.21.1 \
+            aiosqlite==0.19.0 \
+            structlog==23.2.0 \
+            python-dotenv==1.0.0 \
+            "json_repair>=0.25"
+
+      - name: Run pytest
+        # No pytest config / addopts in this repo (no --cov-fail-under gate);
+        # -o addopts="" guards against any inherited options just in case.
+        run: python -m pytest tests/ -o addopts="" -q
