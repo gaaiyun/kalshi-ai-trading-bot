@@ -26,6 +26,9 @@ python-dotenv==1.0.0
 pydantic==2.8.2
 pydantic-settings
 
+# Robust JSON parsing/repair for LLM responses
+json_repair>=0.25
+
 # Logging and monitoring
 structlog==23.2.0
 
