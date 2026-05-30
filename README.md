@@ -1,8 +1,7 @@
-# Kalshi AI Trading Bot - OpenClaw Skill
+# Kalshi AI Trading Bot
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-orange.svg)](https://openclaw.com)
 
 **Multi-agent AI trading system for Kalshi prediction markets with Grok-4 ensemble.**
 
@@ -27,8 +26,9 @@
 ## 🔧 Installation
 
 ```bash
-# Navigate to skill directory
-cd ~/.openclaw/workspace/skills/kalshi-trading
+# Clone and enter the project directory
+git clone https://github.com/gaaiyun/kalshi-ai-trading-bot.git
+cd kalshi-ai-trading-bot
 
 # Install dependencies
 pip install -r requirements.txt
@@ -39,12 +39,12 @@ python -m src.utils.database
 
 ## ⚙️ Configuration
 
-Create `.env` file in the skill directory:
+Create `.env` file in the project directory:
 
 ```bash
 # Kalshi API credentials
 KALSHI_API_KEY=your_kalshi_api_key_id
-# Place your kalshi_private_key file (no extension) in skill directory
+# Place your kalshi_private_key file (no extension) in the project directory
 
 # AI Model APIs
 XAI_API_KEY=your_xai_api_key
@@ -52,7 +52,7 @@ OPENROUTER_API_KEY=your_openrouter_api_key
 OPENAI_API_KEY=your_openai_api_key  # Optional fallback
 ```
 
-Download your Kalshi private key from [Kalshi Settings → API](https://kalshi.com/account/settings) and save as `kalshi_private_key` (no file extension) in the skill directory.
+Download your Kalshi private key from [Kalshi Settings → API](https://kalshi.com/account/settings) and save as `kalshi_private_key` (no file extension) in the project directory.
 
 ## 🎯 Usage
 
@@ -211,7 +211,7 @@ python -m src.utils.database
 ## 📁 Project Structure
 
 ```
-kalshi-trading/
+kalshi-ai-trading-bot/
 ├── scripts/              # Entry point scripts
 │   ├── trade.py         # Main trading bot
 │   ├── dashboard.py     # Monitoring dashboard
@@ -227,7 +227,6 @@ kalshi-trading/
 │   └── utils/           # Database, logging, risk tools
 ├── requirements.txt     # Python dependencies
 ├── .env                # API credentials (create this)
-├── SKILL.md            # Skill documentation
 └── README.md           # This file
 ```
 
@@ -255,7 +254,7 @@ mypy src/
 - **Kalshi API Docs**: [kalshi.com/docs](https://kalshi.com/docs)
 - **xAI Console**: [console.x.ai](https://console.x.ai/)
 - **OpenRouter**: [openrouter.ai](https://openrouter.ai/)
-- **Original Project**: [github.com/kalshi-ai-trading-bot](https://github.com/gaaiyun/kalshi-ai-trading-bot)
+- **Repository**: [github.com/gaaiyun/kalshi-ai-trading-bot](https://github.com/gaaiyun/kalshi-ai-trading-bot)
 
 ## 📄 License
 
@@ -263,7 +262,7 @@ MIT License - See LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-Based on the original [Kalshi AI Trading Bot](https://github.com/gaaiyun/kalshi-ai-trading-bot) project. Adapted for OpenClaw skill framework.
+Built for autonomous trading on [Kalshi](https://kalshi.com) prediction markets.
 
 ---
 
