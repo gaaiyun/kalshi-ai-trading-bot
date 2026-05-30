@@ -1,10 +1,10 @@
-# Kalshi AI Trading Bot Skill
+# Kalshi AI Trading Bot
 
 **Multi-agent AI trading system for Kalshi prediction markets with Grok-4 ensemble.**
 
 ## Overview
 
-This skill provides an autonomous trading bot for [Kalshi](https://kalshi.com) prediction markets, featuring:
+This project provides an autonomous trading bot for [Kalshi](https://kalshi.com) prediction markets, featuring:
 
 - **5-Model AI Ensemble**: Grok-4, Claude Sonnet 4, GPT-4o, Gemini 2.5 Flash, DeepSeek R1
 - **Multi-Agent Decision System**: Forecaster, News Analyst, Bull/Bear Researchers, Risk Manager
@@ -25,8 +25,9 @@ This skill provides an autonomous trading bot for [Kalshi](https://kalshi.com) p
 ### Installation
 
 ```bash
-# Navigate to skill directory
-cd ~/.openclaw/workspace/skills/kalshi-trading
+# Clone and enter the project directory
+git clone https://github.com/gaaiyun/kalshi-ai-trading-bot.git
+cd kalshi-ai-trading-bot
 
 # Install dependencies
 pip install -r requirements.txt
@@ -34,7 +35,7 @@ pip install -r requirements.txt
 
 ### Configuration
 
-Create `.env` file in the skill directory:
+Create `.env` file in the project directory:
 
 ```bash
 # Kalshi API credentials
@@ -223,7 +224,7 @@ python -m src.utils.database
 ### Project Structure
 
 ```
-kalshi-trading/
+kalshi-ai-trading-bot/
 ├── scripts/           # Entry point scripts
 │   ├── trade.py      # Main trading bot
 │   ├── dashboard.py  # Monitoring dashboard
@@ -237,7 +238,7 @@ kalshi-trading/
 │   └── utils/        # Database, logging, risk tools
 ├── requirements.txt  # Python dependencies
 ├── .env             # API credentials (create this)
-└── SKILL.md         # This file
+└── README.md        # Full project documentation
 ```
 
 ### Running Tests
@@ -262,7 +263,7 @@ mypy src/
 - **Kalshi API Docs**: [kalshi.com/docs](https://kalshi.com/docs)
 - **xAI Console**: [console.x.ai](https://console.x.ai/)
 - **OpenRouter**: [openrouter.ai](https://openrouter.ai/)
-- **Original Project**: [github.com/kalshi-ai-trading-bot](https://github.com/gaaiyun/kalshi-ai-trading-bot)
+- **Repository**: [github.com/gaaiyun/kalshi-ai-trading-bot](https://github.com/gaaiyun/kalshi-ai-trading-bot)
 
 ## License
 
