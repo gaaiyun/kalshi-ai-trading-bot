@@ -205,6 +205,50 @@ class TestLLMQueryLogging:
         assert queries[0].strategy == "forecaster"
 
 
+class TestDashboardReads:
+    """Methods consumed by the Streamlit dashboard must exist and aggregate."""
+
+    @pytest.mark.asyncio
+    async def test_get_statistics_empty(self, db):
+        stats = await db.get_statistics()
+        assert stats["total_trades"] == 0
+        assert stats["win_rate"] == 0.0
+        assert stats["total_pnl"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_get_statistics_and_recent_trades(self, db):
+        await db.add_trade_log(
+            TradeLog(
+                market_id="MKT-W", side="YES", entry_price=40.0, exit_price=60.0,
+                quantity=10, pnl=200.0,
+                entry_timestamp=datetime.now() - timedelta(hours=2),
+                exit_timestamp=datetime.now() - timedelta(hours=1),
+                rationale="winner", strategy="directional_trading",
+            )
+        )
+        await db.add_trade_log(
+            TradeLog(
+                market_id="MKT-L", side="NO", entry_price=55.0, exit_price=45.0,
+                quantity=5, pnl=-50.0,
+                entry_timestamp=datetime.now() - timedelta(hours=2),
+                exit_timestamp=datetime.now(),
+                rationale="loser", strategy="directional_trading",
+            )
+        )
+
+        stats = await db.get_statistics()
+        assert stats["total_trades"] == 2
+        assert stats["winning_trades"] == 1
+        assert stats["win_rate"] == 50.0
+        assert abs(stats["total_pnl"] - 150.0) < 1e-9
+
+        recent = await db.get_recent_trades(limit=10)
+        assert len(recent) == 2
+        # Most recent (MKT-L) should come first.
+        assert recent[0]["market_ticker"] == "MKT-L"
+        assert all("price" in t for t in recent)
+
+
 class TestCostTracking:
     """Test daily cost tracking."""
 

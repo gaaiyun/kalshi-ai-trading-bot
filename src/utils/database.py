@@ -987,5 +987,109 @@ class DatabaseManager(TradingLoggerMixin):
                     target_confidence_change=row[13]
                 )
                 positions.append(position)
-            
+
             return positions
+
+    async def get_recent_trades(self, limit: int = 10) -> List[Dict]:
+        """
+        Get the most recent closed trades as plain dictionaries.
+
+        Returns a list of dicts keyed for dashboard display.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT * FROM trade_logs ORDER BY exit_timestamp DESC LIMIT ?",
+                (limit,),
+            )
+            rows = await cursor.fetchall()
+            trades = []
+            for row in rows:
+                row_dict = dict(row)
+                trades.append(
+                    {
+                        "timestamp": row_dict.get("exit_timestamp", ""),
+                        "market_ticker": row_dict.get("market_id", "Unknown"),
+                        "side": row_dict.get("side", "Unknown"),
+                        "quantity": row_dict.get("quantity", 0),
+                        "price": row_dict.get("exit_price", 0.0),
+                        "confidence": 0.0,
+                    }
+                )
+            return trades
+
+    async def get_statistics(self) -> Dict[str, float]:
+        """
+        Compute aggregate trading statistics from closed trades.
+
+        Returns a dict with total_trades, winning_trades, win_rate, total_pnl,
+        avg_pnl and sharpe_ratio.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                """
+                SELECT
+                    COUNT(*) AS total_trades,
+                    SUM(CASE WHEN pnl > 0 THEN 1 ELSE 0 END) AS winning_trades,
+                    SUM(pnl) AS total_pnl,
+                    AVG(pnl) AS avg_pnl
+                FROM trade_logs
+                """
+            )
+            row = await cursor.fetchone()
+
+            total_trades = (row["total_trades"] or 0) if row else 0
+            winning_trades = (row["winning_trades"] or 0) if row else 0
+            total_pnl = (row["total_pnl"] or 0.0) if row else 0.0
+            avg_pnl = (row["avg_pnl"] or 0.0) if row else 0.0
+            win_rate = (winning_trades / total_trades * 100) if total_trades > 0 else 0.0
+
+            # Sharpe ratio over per-trade PnL (0 if not enough data / no spread).
+            sharpe_ratio = 0.0
+            if total_trades > 1:
+                pnl_cursor = await db.execute("SELECT pnl FROM trade_logs")
+                pnls = [r[0] for r in await pnl_cursor.fetchall() if r[0] is not None]
+                if len(pnls) > 1:
+                    mean = sum(pnls) / len(pnls)
+                    variance = sum((p - mean) ** 2 for p in pnls) / (len(pnls) - 1)
+                    std = variance ** 0.5
+                    if std > 0:
+                        sharpe_ratio = mean / std
+
+            return {
+                "total_trades": total_trades,
+                "winning_trades": winning_trades,
+                "win_rate": win_rate,
+                "total_pnl": total_pnl,
+                "avg_pnl": avg_pnl,
+                "sharpe_ratio": sharpe_ratio,
+            }
+
+
+def _main() -> None:
+    """CLI entry point: initialize the database schema.
+
+    Documented in the README as the first-time setup / repair command:
+        python -m src.utils.database
+    """
+    import argparse
+    import asyncio
+
+    parser = argparse.ArgumentParser(
+        description="Initialize the Kalshi trading database schema."
+    )
+    parser.add_argument(
+        "--db-path",
+        default="trading_system.db",
+        help="Path to the SQLite database file (default: trading_system.db)",
+    )
+    args = parser.parse_args()
+
+    manager = DatabaseManager(db_path=args.db_path)
+    asyncio.run(manager.initialize())
+    print(f"Database initialized: {args.db_path}")
+
+
+if __name__ == "__main__":
+    _main()

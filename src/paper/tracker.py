@@ -206,3 +206,114 @@ def get_stats() -> Dict[str, Any]:
         "best_trade": round(max(pnls), 4) if pnls else 0.0,
         "worst_trade": round(min(pnls), 4) if pnls else 0.0,
     }
+
+
+class PaperTracker:
+    """
+    Async-friendly facade over the paper-trading signal store.
+
+    `scripts/paper_trade.py` drives this class. The methods that touch the
+    signal database (statistics, settlement bookkeeping) work with no
+    credentials. Methods that need live market data (`scan_and_log`,
+    `update_settled_markets`) use a real Kalshi client when one is available
+    and raise a clear error otherwise instead of inventing data.
+    """
+
+    def __init__(self, kalshi_client=None):
+        self._kalshi = kalshi_client
+
+    def _get_kalshi(self):
+        """Lazily build a KalshiClient; surfaces a clear error if it can't."""
+        if self._kalshi is not None:
+            return self._kalshi
+        # Imported lazily so the stats/dashboard paths never require the
+        # Kalshi client (and its private-key file) to be available.
+        from src.clients.kalshi_client import KalshiClient
+
+        self._kalshi = KalshiClient()
+        return self._kalshi
+
+    async def get_statistics(self) -> Dict[str, Any]:
+        """Return summary statistics in the shape the CLI expects."""
+        stats = get_stats()
+        # The CLI prints avg_pnl; expose it as an alias of avg_return.
+        stats["avg_pnl"] = stats.get("avg_return", 0.0)
+        return stats
+
+    async def scan_and_log(self) -> int:
+        """
+        Fetch live open markets from Kalshi and record paper-trading signals.
+
+        Requires Kalshi API credentials and an AI client to score markets.
+        Without an AI scorer wired in we deliberately log nothing rather than
+        fabricate signals; the caller is told why.
+
+        Returns the number of signals logged.
+        """
+        kalshi = self._get_kalshi()
+        markets_resp = await kalshi.get_markets(limit=100, status="open")
+        markets = markets_resp.get("markets", []) if isinstance(markets_resp, dict) else []
+
+        scored = await self._score_markets(markets)
+        logged = 0
+        for market_id, market_title, side, entry_price, confidence, reasoning in scored:
+            log_signal(
+                market_id=market_id,
+                market_title=market_title,
+                side=side,
+                entry_price=entry_price,
+                confidence=confidence,
+                reasoning=reasoning,
+                strategy="directional",
+            )
+            logged += 1
+        return logged
+
+    async def _score_markets(self, markets):
+        """
+        Hook for turning live markets into signals.
+
+        The probability model (AI ensemble) is not wired into the paper
+        tracker, so by default this returns no signals and explains that an
+        AI scorer is required. Subclasses or callers can override this to
+        plug in their own scoring without changing the rest of the pipeline.
+        """
+        raise RuntimeError(
+            "No AI scorer is configured for paper scanning. "
+            "Fetched %d live markets but cannot generate signals without a "
+            "probability model. Use --stats/--dashboard/--settle to work with "
+            "previously logged signals." % len(markets)
+        )
+
+    async def update_settled_markets(self) -> int:
+        """
+        Settle any pending signals whose markets have resolved on Kalshi.
+
+        Returns the number of signals that were newly settled.
+        """
+        pending = get_pending_signals()
+        if not pending:
+            return 0
+
+        kalshi = self._get_kalshi()
+        settled_count = 0
+        for sig in pending:
+            market_id = sig["market_id"]
+            try:
+                resp = await kalshi.get_market(market_id)
+            except Exception:
+                continue
+            market = resp.get("market", {}) if isinstance(resp, dict) else {}
+            if market.get("status") != "settled":
+                continue
+            # Kalshi reports the settled result as "yes" or "no".
+            result = market.get("result")
+            if result == "yes":
+                settlement_price = 1.0
+            elif result == "no":
+                settlement_price = 0.0
+            else:
+                continue
+            settle_signal(sig["id"], settlement_price)
+            settled_count += 1
+        return settled_count

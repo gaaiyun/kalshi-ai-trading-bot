@@ -26,18 +26,19 @@ async def show_status():
         db = DatabaseManager()
         kalshi = KalshiClient()
         
-        # Get balance
-        balance = await kalshi.get_balance()
-        logger.info(f"💰 Balance: ${balance:.2f}")
+        # Get balance (Kalshi returns cents inside a dict)
+        balance_resp = await kalshi.get_balance()
+        balance = balance_resp.get("balance", 0) / 100.0 if isinstance(balance_resp, dict) else float(balance_resp)
+        logger.info(f"Balance: ${balance:.2f}")
         
         # Get open positions
         positions = await db.get_open_positions()
         
         if not positions:
-            logger.info("📊 No open positions")
+            logger.info("No open positions")
             return
         
-        logger.info(f"📊 Open Positions ({len(positions)}):")
+        logger.info(f"Open Positions ({len(positions)}):")
         
         total_invested = 0
         total_value = 0
@@ -67,7 +68,7 @@ async def show_status():
         total_pnl = total_value - total_invested
         total_pnl_pct = (total_pnl / total_invested * 100) if total_invested > 0 else 0
         
-        logger.info(f"\n💼 Portfolio Summary:")
+        logger.info(f"\nPortfolio Summary:")
         logger.info(f"  Total Invested: ${total_invested:.2f}")
         logger.info(f"  Current Value: ${total_value:.2f}")
         logger.info(f"  Total P&L: ${total_pnl:.2f} ({total_pnl_pct:+.1f}%)")

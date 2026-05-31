@@ -43,13 +43,13 @@ async def main():
     live_mode = args.live and not args.paper
 
     if live_mode:
-        logger.warning("⚠️  LIVE TRADING MODE ENABLED - REAL MONEY AT RISK ⚠️")
+        logger.warning("LIVE TRADING MODE ENABLED - REAL MONEY AT RISK")
         response = input("Are you sure you want to trade with real money? (yes/no): ")
         if response.lower() != "yes":
             logger.info("Live trading cancelled by user")
             return
     else:
-        logger.info("📝 Paper trading mode - no real money at risk")
+        logger.info("Paper trading mode - no real money at risk")
 
     # Initialize and run the bot
     bot = KalshiTradingBot(live_mode=live_mode)
