@@ -24,50 +24,51 @@ logger = get_trading_logger("health")
 
 async def check_health():
     """Run health checks on all components."""
-    logger.info("🏥 Running health checks...")
+    logger.info("Running health checks...")
     
     all_ok = True
     
     # Check environment variables
-    logger.info("\n📋 Checking environment variables...")
+    logger.info("\nChecking environment variables...")
     required_vars = ["KALSHI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY"]
     for var in required_vars:
         if os.getenv(var):
-            logger.info(f"  ✅ {var} is set")
+            logger.info(f"  {var} is set")
         else:
-            logger.error(f"  ❌ {var} is missing")
+            logger.error(f"  {var} is missing")
             all_ok = False
     
     # Check Kalshi private key file
     key_file = Path("kalshi_private_key")
     if key_file.exists():
-        logger.info(f"  ✅ kalshi_private_key file found")
+        logger.info(f"  kalshi_private_key file found")
     else:
-        logger.error(f"  ❌ kalshi_private_key file not found")
+        logger.error(f"  kalshi_private_key file not found")
         all_ok = False
     
     # Check database
-    logger.info("\n💾 Checking database...")
+    logger.info("\nChecking database...")
     try:
         db = DatabaseManager()
         await db.initialize()
-        logger.info("  ✅ Database initialized successfully")
+        logger.info("  Database initialized successfully")
     except Exception as e:
-        logger.error(f"  ❌ Database error: {e}")
+        logger.error(f"  Database error: {e}")
         all_ok = False
     
     # Check Kalshi API
-    logger.info("\n🔗 Checking Kalshi API...")
+    logger.info("\nChecking Kalshi API...")
     try:
         kalshi = KalshiClient()
-        balance = await kalshi.get_balance()
-        logger.info(f"  ✅ Kalshi API connected - Balance: ${balance:.2f}")
+        balance_resp = await kalshi.get_balance()
+        balance = balance_resp.get("balance", 0) / 100.0 if isinstance(balance_resp, dict) else float(balance_resp)
+        logger.info(f"  Kalshi API connected - Balance: ${balance:.2f}")
     except Exception as e:
-        logger.error(f"  ❌ Kalshi API error: {e}")
+        logger.error(f"  Kalshi API error: {e}")
         all_ok = False
     
     # Check xAI API
-    logger.info("\n🤖 Checking xAI API (Grok-4)...")
+    logger.info("\nChecking xAI API (Grok-4)...")
     try:
         xai = XAIClient()
         response = await xai.get_completion(
@@ -75,16 +76,16 @@ async def check_health():
             max_tokens=10
         )
         if response:
-            logger.info(f"  ✅ xAI API connected")
+            logger.info(f"  xAI API connected")
         else:
-            logger.error(f"  ❌ xAI API returned empty response")
+            logger.error(f"  xAI API returned empty response")
             all_ok = False
     except Exception as e:
-        logger.error(f"  ❌ xAI API error: {e}")
+        logger.error(f"  xAI API error: {e}")
         all_ok = False
     
     # Check OpenRouter API
-    logger.info("\n🌐 Checking OpenRouter API...")
+    logger.info("\nChecking OpenRouter API...")
     try:
         openrouter = OpenRouterClient()
         response = await openrouter.get_completion(
@@ -93,20 +94,20 @@ async def check_health():
             max_tokens=10
         )
         if response:
-            logger.info(f"  ✅ OpenRouter API connected")
+            logger.info(f"  OpenRouter API connected")
         else:
-            logger.error(f"  ❌ OpenRouter API returned empty response")
+            logger.error(f"  OpenRouter API returned empty response")
             all_ok = False
     except Exception as e:
-        logger.error(f"  ❌ OpenRouter API error: {e}")
+        logger.error(f"  OpenRouter API error: {e}")
         all_ok = False
     
     # Summary
     logger.info("\n" + "="*50)
     if all_ok:
-        logger.info("✅ All health checks passed!")
+        logger.info("All health checks passed!")
     else:
-        logger.error("❌ Some health checks failed. Please fix the issues above.")
+        logger.error("Some health checks failed. Please fix the issues above.")
     logger.info("="*50)
     
     return all_ok

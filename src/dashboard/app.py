@@ -38,34 +38,38 @@ def run_dashboard():
     
     # Get data
     try:
-        balance = asyncio.run(kalshi.get_balance())
+        balance_resp = asyncio.run(kalshi.get_balance())
+        # Kalshi returns balance in cents inside a dict; fall back gracefully.
+        if isinstance(balance_resp, dict):
+            balance = balance_resp.get("balance", 0) / 100.0
+        else:
+            balance = float(balance_resp)
         positions = asyncio.run(db.get_open_positions())
         stats = asyncio.run(db.get_statistics())
-        
+
         # Display metrics
         with col1:
             st.metric("💰 Balance", f"${balance:.2f}")
-        
+
         with col2:
             st.metric("📊 Open Positions", len(positions))
-        
+
         with col3:
             total_pnl = stats.get('total_pnl', 0)
             st.metric("💵 Total P&L", f"${total_pnl:.2f}")
-        
+
         # Positions table
         st.header("Open Positions")
         if positions:
             position_data = []
             for pos in positions:
                 position_data.append({
-                    "Market": pos.get('market_ticker', 'Unknown'),
-                    "Side": pos.get('side', 'Unknown').upper(),
-                    "Quantity": pos.get('quantity', 0),
-                    "Entry Price": f"${pos.get('entry_price', 0):.2f}",
-                    "Current Price": f"${pos.get('current_price', 0):.2f}",
-                    "P&L": f"${pos.get('pnl', 0):.2f}",
-                    "P&L %": f"{pos.get('pnl_pct', 0):.1f}%"
+                    "Market": pos.market_id,
+                    "Side": (pos.side or "Unknown").upper(),
+                    "Quantity": pos.quantity,
+                    "Entry Price": f"${pos.entry_price:.2f}",
+                    "Strategy": pos.strategy or "—",
+                    "Confidence": f"{pos.confidence:.2f}" if pos.confidence is not None else "—",
                 })
             st.dataframe(position_data, use_container_width=True)
         else:
@@ -110,8 +114,9 @@ def run_dashboard():
     
     # Auto refresh
     if auto_refresh:
+        import time
+        time.sleep(refresh_interval)
         st.rerun()
-        asyncio.sleep(refresh_interval)
 
 
 if __name__ == "__main__":

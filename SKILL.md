@@ -40,7 +40,7 @@ Create `.env` file in the project directory:
 ```bash
 # Kalshi API credentials
 KALSHI_API_KEY=your_kalshi_api_key_id
-# Place your kalshi_private_key file (no extension) in skill directory
+# Place your kalshi_private_key file (no extension) in the project directory
 
 # AI Model APIs
 XAI_API_KEY=your_xai_api_key

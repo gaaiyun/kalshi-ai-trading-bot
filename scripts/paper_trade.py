@@ -34,38 +34,50 @@ async def main():
     parser.add_argument("--stats", action="store_true", help="Print statistics")
     args = parser.parse_args()
 
+    from src.clients.kalshi_client import KalshiAPIError
+
     tracker = PaperTracker()
 
     try:
         if args.settle:
-            logger.info("📊 Checking settled markets...")
-            await tracker.update_settled_markets()
-            logger.info("✅ Settled markets updated")
-        
+            logger.info("Checking settled markets...")
+            try:
+                settled = await tracker.update_settled_markets()
+                logger.info(f"Settled markets updated ({settled} newly settled)")
+            except KalshiAPIError as e:
+                logger.warning(f"Cannot settle without Kalshi credentials: {e}")
+
         elif args.dashboard:
-            logger.info("📈 Generating dashboard...")
-            generate_dashboard()
-            logger.info("✅ Dashboard generated: docs/paper_dashboard.html")
-        
+            logger.info("Generating dashboard...")
+            out = generate_dashboard()
+            logger.info(f"Dashboard generated: {out}")
+
         elif args.stats:
-            logger.info("📊 Paper Trading Statistics:")
             stats = await tracker.get_statistics()
+            logger.info("Paper Trading Statistics:")
             logger.info(f"  Total Signals: {stats['total_signals']}")
             logger.info(f"  Win Rate: {stats['win_rate']:.1f}%")
             logger.info(f"  Total P&L: ${stats['total_pnl']:.2f}")
             logger.info(f"  Avg P&L per Trade: ${stats['avg_pnl']:.2f}")
-        
+
         elif args.loop:
-            logger.info(f"🔄 Starting continuous scanning (interval: {args.interval}s)")
+            logger.info(f"Starting continuous scanning (interval: {args.interval}s)")
             while True:
-                await tracker.scan_and_log()
-                logger.info(f"⏳ Waiting {args.interval} seconds...")
+                try:
+                    logged = await tracker.scan_and_log()
+                    logger.info(f"Scan complete - logged {logged} signal(s)")
+                except (RuntimeError, KalshiAPIError) as e:
+                    logger.warning(f"Scan skipped: {e}")
+                logger.info(f"Waiting {args.interval} seconds...")
                 await asyncio.sleep(args.interval)
-        
+
         else:
-            logger.info("📝 Scanning markets for signals...")
-            await tracker.scan_and_log()
-            logger.info("✅ Scan complete")
+            logger.info("Scanning markets for signals...")
+            try:
+                logged = await tracker.scan_and_log()
+                logger.info(f"Scan complete - logged {logged} signal(s)")
+            except (RuntimeError, KalshiAPIError) as e:
+                logger.warning(f"Scan skipped: {e}")
 
     except KeyboardInterrupt:
         logger.info("Paper trading stopped by user")
